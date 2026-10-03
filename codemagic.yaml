@@ -1,0 +1,40 @@
+workflows:
+  runwise-android-debug:
+    name: RunWise Android APK (test install)
+    max_build_duration: 60
+    instance_type: linux_x2
+    working_directory: android
+    scripts:
+      - name: Set Android SDK location
+        script: echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Show build environment
+        script: |
+          java -version
+          gradle --version
+      - name: Build installable debug APK
+        script: gradle --no-daemon assembleDebug
+    artifacts:
+      - app/build/outputs/apk/debug/*.apk
+
+  runwise-android-release:
+    name: RunWise Android Release APK
+    max_build_duration: 60
+    instance_type: linux_x2
+    working_directory: android
+    environment:
+      android_signing:
+        - runwise_release
+    scripts:
+      - name: Set Android SDK location
+        script: echo "sdk.dir=$ANDROID_SDK_ROOT" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Configure release signing
+        script: |
+          test -n "$CM_KEYSTORE_PATH"
+          test -n "$CM_KEYSTORE_PASSWORD"
+          test -n "$CM_KEY_ALIAS"
+          test -n "$CM_KEY_PASSWORD"
+      - name: Build signed release APK
+        script: gradle --no-daemon assembleRelease
+    artifacts:
+      - app/build/outputs/apk/release/*.apk
+      - app/build/outputs/mapping/release/mapping.txt
